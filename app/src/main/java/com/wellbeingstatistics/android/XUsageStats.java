@@ -8,4 +8,11 @@ public class XUsageStats {
     public Drawable appIcon;
 
     public String appName;
+
+    public double[] openLoc;
+
+//    public String LastADD;
 }
+
+
+

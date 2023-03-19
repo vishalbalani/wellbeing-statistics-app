@@ -16,6 +16,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -25,11 +27,20 @@ import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,6 +57,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_LOCATION_PERMISSION = 1;
     private LocationManager locationManager;
     private LocationListener locationListener;
+    private DateFormat mDateFormat = new SimpleDateFormat();
+
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
     private double mLatitude;
     private double mLongitude;
 
@@ -55,11 +69,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        checkPermission();
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        double[] latLng = retrieveLocation();
-        mLatitude = latLng[0];
-        mLatitude = latLng[1];
+//        currentLoc();
 
 
         AppOpsManager appOps = (AppOpsManager) this
@@ -85,9 +99,42 @@ public class MainActivity extends AppCompatActivity {
                 updateAppsList(usageStatsList);
             }
         }
+
     }
 
 //    -----------------------------Location------------------
+
+    public void checkPermission() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,}, 1);
+                Intent intent = getIntent();
+                finish();
+                startActivity(intent);
+            }
+        }
+    }
+
+    private String getAddressFromLocation(double latitude, double longitude) {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+            if (addresses != null && addresses.size() > 0) {
+                Address address = addresses.get(0);
+                String addressString = address.getAddressLine(0);
+                return addressString;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return "";
+
+    }
 
     public double[] retrieveLocation() {
         double[] latLng = new double[2];
@@ -212,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
             XUsageStats customUsageStats = new XUsageStats();
             customUsageStats.usageStats = usageStatsList.get(i);
             String packageName = customUsageStats.usageStats.getPackageName();
-
+            long lastTimeUsed = customUsageStats.usageStats.getLastTimeUsed();
             if (isSystemApp(packageName)) {
                 continue;
             }
@@ -220,6 +267,11 @@ public class MainActivity extends AppCompatActivity {
             if (packageName.equals(BuildConfig.APPLICATION_ID)) {
                 continue;
             }
+
+            Map<String, Object> user = new HashMap<>();
+            user.put("Package Name:", packageName);
+
+            user.put("Last Used: ", mDateFormat.format(new Date(lastTimeUsed)));
 
             try {
                 Drawable appIcon = this.getPackageManager()
@@ -232,6 +284,7 @@ public class MainActivity extends AppCompatActivity {
                         .getDrawable(R.drawable.ic_launcher_foreground);
             }
 
+
             PackageManager packageManager = getApplicationContext().getPackageManager();
             String appName=packageName;
 
@@ -243,25 +296,28 @@ public class MainActivity extends AppCompatActivity {
                 applicationInfo = null;
             }
             customUsageStats.appName = appName;
+            user.put("App Name:", appName);
+            customUsageStats.openLoc = retrieveLocation();
+//            user.put("Location", retrieveLocation());
+            db.collection("user").add(user);
 
             customUsageStatsList.add(customUsageStats);
+
         }
         mUsageListAdapter.setCustomUsageStatsList(customUsageStatsList);
         mUsageListAdapter.notifyDataSetChanged();
         mRecyclerView.scrollToPosition(0);
 
-        double[] latLng = retrieveLocation();
-        Log.d("LocationOther: ", "Latitude: " + latLng[0] + ", Longitude: " + latLng[1]);
+
+//        Log.d("LocationOther: ", "Latitude: " + latLng[0] + ", Longitude: " + latLng[1]);
 
     }
 
     public boolean isSystemApp(String packageName) {
         try {
-            // Get packageinfo for target application
             PackageManager mPackageManager = this.getPackageManager();
             PackageInfo targetPkgInfo = mPackageManager.getPackageInfo(
                     packageName, PackageManager.GET_SIGNATURES);
-            // Get packageinfo for system package
             PackageInfo sys = mPackageManager.getPackageInfo(
                     SYSTEM_PACKAGE_NAME, PackageManager.GET_SIGNATURES);
             // Match both packageinfo for there signatures
@@ -272,10 +328,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * The {@link Comparator} to sort a collection of {@link UsageStats} sorted by the timestamp
-     * last time the app was used in the descendant order.
-     */
+
     private static class LastTimeLaunchedComparatorDesc implements Comparator<UsageStats> {
 
         @Override
@@ -312,5 +365,10 @@ public class MainActivity extends AppCompatActivity {
         latLng = retrieveLocation();
         mLatitude=latLng[0];
         mLongitude=latLng[1];
+        Map<String, Object> loc = new HashMap<>();
+        loc.put("Latitude:", latLng[0]);
+        loc.put("Longitude:", latLng[1]);
+        db.collection("Loc").add(loc);
+
     }
 }

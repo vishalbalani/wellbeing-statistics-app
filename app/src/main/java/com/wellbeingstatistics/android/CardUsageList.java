@@ -28,12 +28,15 @@ public class CardUsageList extends RecyclerView.Adapter<CardUsageList.ViewHolder
 
         private final ImageView mAppIcon;
 
+        private final TextView mappLoc;
+
 
         public ViewHolder(View v) {
             super(v);
             mPackageName = (TextView) v.findViewById(R.id.textview_package_name);
             mLastTimeUsed = (TextView) v.findViewById(R.id.textview_last_time_used);
             mAppIcon = (ImageView) v.findViewById(R.id.app_icon);
+            mappLoc = (TextView) v.findViewById(R.id.appLoc);
 
         }
 
@@ -46,6 +49,8 @@ public class CardUsageList extends RecyclerView.Adapter<CardUsageList.ViewHolder
         }
 
         public ImageView getAppIcon() { return mAppIcon;}
+
+        public TextView getAppLoc(){return mappLoc;}
 
 
     }
@@ -69,7 +74,12 @@ public class CardUsageList extends RecyclerView.Adapter<CardUsageList.ViewHolder
         long lastTimeUsed = mCustomUsageStatsList.get(position).usageStats.getLastTimeUsed();
         viewHolder.getLastTimeUsed().setText(mDateFormat.format(new Date(lastTimeUsed)));
         viewHolder.getAppIcon().setImageDrawable(mCustomUsageStatsList.get(position).appIcon);
-
+        double lo=mCustomUsageStatsList.get(position).openLoc[1];
+        double la=mCustomUsageStatsList.get(position).openLoc[0];
+        String StrLo = new Double(lo).toString();
+        String StrLa = new Double(la).toString();
+        String Location = StrLo+", "+StrLa;
+        viewHolder.getAppLoc().setText(Location);
     }
 
     @Override

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "115460061337",
+    "project_id": "wellbeing-statistics-93c50",
+    "storage_bucket": "wellbeing-statistics-93c50.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:115460061337:android:a45c0a45a26a61fb5aa008",
+        "android_client_info": {
+          "package_name": "com.wellbeingstatistics.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "115460061337-glgpt6h5bj9la2hv4q6ic1kro2etl120.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCn4HwwA4N6EVWlSyGk0I_-848uSrLoJDc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "115460061337-glgpt6h5bj9la2hv4q6ic1kro2etl120.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
